@@ -17,13 +17,18 @@ const nodemailerReceiver = process.env.nodemailerReceiver;
 
 
 const StudentRegister = async(req,res)=>{
-    const {fullname,email,scnumber,password,confirmpassword,usertype}= req.body;
+    const {fname,lname,email,scnumber,password,confirmpassword,usertype}= req.body;
     
     try {
     
-        if (!fullname || fullname.trim() === "") {
-            console.log("Fullname is required");
-            return res.send({ error: 'Fullname is required' });
+        if (!fname || fname.trim() === "") {
+            console.log("First Name is required");
+            return res.send({ error: 'First Name is required' });
+          }
+
+          if (!lname || lname.trim() === "") {
+            console.log("Last Name is required");
+            return res.send({ error: 'Last Name is required' });
           }
     
         if(!emailValidator.validate(email)){
@@ -48,10 +53,10 @@ const StudentRegister = async(req,res)=>{
             return res.json({error:"Student Number Already Used"});
         }
     
-        const passwordRegx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+        const passwordRegx = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+])[0-9a-zA-Z!@#$%^&*()_+]{8,}$/;
         if(!passwordRegx.test(password)){
-            console.log("Password must be at least 8 characters long and include uppercase, lowercase, and numeric characters");
-            return res.send({error:"Password must be at least 8 characters long and include uppercase, lowercase, and numeric characters"});
+            console.log("Password format incorrect");
+            return res.send({error:"Password format incorrect"});
         }
     
         if (password !== confirmpassword) {
@@ -62,7 +67,8 @@ const StudentRegister = async(req,res)=>{
         const encryptedPassword = await bcrypt.hash(password,10);
     
         await User.create({
-            fullname,
+            fname,
+            lname,
             email,
             scnumber,
             password:encryptedPassword,
@@ -75,13 +81,18 @@ const StudentRegister = async(req,res)=>{
     };
 
     const MentorRegister = async(req,res)=>{
-        const {fullname,email,mentorid,password,confirmpassword,usertype}= req.body;
+        const {fname,lname,email,mentorid,password,confirmpassword,usertype}= req.body;
         
         try {
     
-            if (!fullname || fullname.trim() === "") {
-                console.log("Fullname is required");
-                return res.send({ error: 'Fullname is required' });
+            if (!fname || fname.trim() === "") {
+                console.log("First Name is required");
+                return res.send({ error: 'First Name is required' });
+              }
+    
+              if (!lname || lname.trim() === "") {
+                console.log("Last Name is required");
+                return res.send({ error: 'Last Name is required' });
               }
     
             if(!emailValidator.validate(email)){
@@ -99,10 +110,10 @@ const StudentRegister = async(req,res)=>{
             return res.json({error:"Mentor ID Already Used"});
             }
     
-            const passwordRegx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+            const passwordRegx = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+])[0-9a-zA-Z!@#$%^&*()_+]{8,}$/;
             if(!passwordRegx.test(password)){
-            console.log("Password must be at least 8 characters long and include uppercase, lowercase, and numeric characters");
-            return res.send({error:"Password must be at least 8 characters long and include uppercase, lowercase, and numeric characters"});
+            console.log("Password format incorrect");
+            return res.send({error:"Password format incorrect"});
             }
     
             if (password !== confirmpassword) {
@@ -113,7 +124,8 @@ const StudentRegister = async(req,res)=>{
             const encryptedPassword = await bcrypt.hash(password,10);
     
             await User.create({
-                fullname,
+                fname,
+                lname,
                 email,
                 mentorid,
                 password:encryptedPassword,
