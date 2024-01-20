@@ -107,7 +107,7 @@ const StudentRegister = async(req,res)=>{
     
             const oldmentorid = await User.findOne({mentorid});
             if(oldmentorid){
-            return res.json({error:"Mentor ID Already Used"});
+                return res.json({error:"Mentor ID Already Used"});
             }
     
             const passwordRegx = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+])[0-9a-zA-Z!@#$%^&*()_+]{8,}$/;
@@ -215,7 +215,7 @@ const StudentRegister = async(req,res)=>{
                       res.send({status:"Email has been sent"});
                     }
                   });
-                console.log(link);
+                //console.log(link);
             } catch (error) {
                 
             }
