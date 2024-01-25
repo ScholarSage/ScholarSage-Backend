@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose=require('mongoose');
 
 const UserDetailsSchema = new mongoose.Schema(
     {
@@ -13,12 +13,13 @@ const UserDetailsSchema = new mongoose.Schema(
         mentorid: {type:String,required:function(){
             return this.usertype === 'Mentor';
         }},
-    },
-    {
-        collection:"UserInfo",
-    }
-    );
+        address: {type:String},
+        contactNumber: {type:String},
+        city: {type:String},
+        state: {type:String},
+        profilePhoto: {type:String}, // Assuming you store the file path or URL
+    });
 
-const User = mongoose.model("UserInfo",UserDetailsSchema);
+    const User = mongoose.model("UserInfo",UserDetailsSchema);
 
-module.exports = User;
+    module.exports = User;

@@ -107,7 +107,7 @@ const StudentRegister = async(req,res)=>{
     
             const oldmentorid = await User.findOne({mentorid});
             if(oldmentorid){
-                return res.json({error:"Mentor ID Already Used"});
+            return res.json({error:"Mentor ID Already Used"});
             }
     
             const passwordRegx = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+])[0-9a-zA-Z!@#$%^&*()_+]{8,}$/;
@@ -215,7 +215,7 @@ const StudentRegister = async(req,res)=>{
                       res.send({status:"Email has been sent"});
                     }
                   });
-                //console.log(link);
+                console.log(link);
             } catch (error) {
                 
             }
@@ -271,6 +271,104 @@ const StudentRegister = async(req,res)=>{
             }
         };
 
+        const UpdateProfile=async(req,res)=>{
+            const {id}=req.params;
+            const{fname,lname,email,address,contactNumber,city,state}=req.body;
+
+            try{
+                User.updateOne(
+                    {_id:id},
+                    {
+                        $set:{
+                           fname:fname,
+                           lname:lname,
+                           email:email,
+                           address:address,
+                           contactNumber:contactNumber,
+                           city:city,
+                           state:state
+                        },
+                    }
+                );
+                res.json({status:"ok",message:"Profile updated successfully"});
+            }catch(error){
+                res.json({status:"error",message:"Error updating profile"});
+            }
+        };
+
+        const UploadPhoto=async(req,res)=>{
+            // Add logic to handle file upload and update user's photo URL in the database
+            // You may use libraries like multer for file uploads
+            // Example: const photoUrl = req.file.path;
+
+            const id=req.body;
+
+            try{
+                // Update user's photo URL in the database
+                await User.updateOne(
+                    {_id:id},
+                    {
+                        $set:{
+                            photoUrl:photoUrl,
+                        },
+                    }
+                );
+                res.json({status:"ok",message:"Photo uploaded successfully"});
+            }catch(error){
+                res.json({status:"error",message:"Error uploading photo"})
+            }
+        };
+
+        const DeletePhoto=async(req,res)=>{
+            const userId=req.body.userId;
+
+            try{
+                await User.updateOne(
+                    {_id:userId},
+                    {
+                        $unset:{
+                            photoUrl:"",
+                        },
+                    }
+                );
+                res,json({status:"ok",message:"Photo deleted successfully."});
+            }catch(error){
+                res.json({status:"error",message:"Error deleting photo"});
+            }
+        };
+
+        const ChangePassword=async(req,res)=>{
+            const{id,currentPassword,newPassword,confirmPassword}=req.body;
+
+            try{
+                const user=await User.findOne({_id:id});
+
+                if(!user){
+                    return res.json({status:"error",message:"User not found"});
+                }
+                if(!(await bcrypt.compare(currentPassword,user.password))){
+                    return res.json({status:"error",message:"Invalid current password"});
+                }
+                if(newPassword!==confirmPassword){
+                    return res.json({status:"error",message:"New password and confirm password do not match"})
+                }
+
+                const encryptedPassword=await bcrypt.hash(newPassword,10);
+
+                await User.updateOne(
+                    {_id:id},
+                    {
+                        $set:{
+                            password:encryptedPassword,
+                        },
+                    }
+                );
+                res.json({status:"ok",message:"Password changed successfully"});
+            }catch(error){
+                res.json({status:"Error",message:"Error Changing Password"})
+            }
+        };
+
 
     exports.StudentRegister = StudentRegister;
     exports.MentorRegister = MentorRegister;
@@ -279,3 +377,7 @@ const StudentRegister = async(req,res)=>{
     exports.ForgetPassword = ForgetPassword;
     exports.ResetPasswordBeforeSubmit = ResetPasswordBeforeSubmit;
     exports.ResetPasswordAfterSubmit = ResetPasswordAfterSubmit;
+    exports.UpdateProfile=UpdateProfile;
+    exports.UploadPhoto=UploadPhoto;
+    exports.DeletePhoto=DeletePhoto;
+    exports.ChangePassword=ChangePassword;
