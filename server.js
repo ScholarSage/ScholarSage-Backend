@@ -11,7 +11,9 @@ app.use(cors());                 //
 app.set("view engine","ejs");   //To show the html and javascript code in node
 app.use(express.urlencoded({extended:false}));  //
 
-const PORT=process.env.PORT||5000;
+//const PORT=process.env.PORT||5000;
+
+const PORT = 8081;
 
 const mongoUrl = process.env.mongoUrl;
 

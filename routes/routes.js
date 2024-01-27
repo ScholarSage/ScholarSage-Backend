@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 const { StudentRegister,MentorRegister,LoginUser,UserData,ForgetPassword,ResetPasswordBeforeSubmit,ResetPasswordAfterSubmit,UpdateProfile,UploadPhoto,DeletePhoto,ChangePassword} = require("../controllers/userController");
-const { UpdateProfile,UploadPhoto } = require("../controllers/userController");
 
 router.post("/StudentRegister",StudentRegister);
 router.post("/MentorRegister",MentorRegister);
