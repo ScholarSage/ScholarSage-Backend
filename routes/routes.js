@@ -1,7 +1,11 @@
 const express = require("express");
 const router = express.Router();
 
+<<<<<<< HEAD
 const { StudentRegister,MentorRegister,LoginUser,UserData,ForgetPassword,ResetPasswordBeforeSubmit,ResetPasswordAfterSubmit,SaveChanges,UploadPhoto,DeletePhoto} = require("../controllers/userController");
+=======
+const { StudentRegister,MentorRegister,LoginUser,UserData,ForgetPassword,ResetPasswordBeforeSubmit,ResetPasswordAfterSubmit,UpdateProfile,UploadPhoto,DeletePhoto,ChangePassword} = require("../controllers/userController");
+>>>>>>> 4e173b6b597865411c898eb5de181d7a9bd26ac1
 
 router.post("/StudentRegister",StudentRegister);
 router.post("/MentorRegister",MentorRegister);
