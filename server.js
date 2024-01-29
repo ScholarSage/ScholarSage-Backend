@@ -10,6 +10,7 @@ app.use(express.json());          //
 app.use(cors());                 //
 app.set("view engine","ejs");   //To show the html and javascript code in node
 app.use(express.urlencoded({extended:false}));  //
+app.use(upload.single('photo'));
 
 const PORT=process.env.PORT||5000;
 
