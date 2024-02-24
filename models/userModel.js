@@ -13,6 +13,15 @@ const UserDetailsSchema = new mongoose.Schema(
         mentorid: {type:String,required:function(){
             return this.usertype === 'Mentor';
         }},
+        isApproved: {
+            type: Boolean,
+            default: function() {
+                return this.usertype === 'Mentor' ? false : undefined;
+            },
+            required: function() {
+                return this.usertype === 'Mentor';
+            }
+        },
         address: {type:String},
         contactNumber: {type:String},
         city: {type:String},

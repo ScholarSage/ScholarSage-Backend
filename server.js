@@ -3,6 +3,8 @@ const app = express();
 const mongoose = require("mongoose");
 const cors = require("cors");     //cors should be in global
 const routes = require("./routes/routes");
+const multer = require("multer");
+const upload = multer();
 
 require('dotenv').config();
 
@@ -12,9 +14,9 @@ app.set("view engine","ejs");   //To show the html and javascript code in node
 app.use(express.urlencoded({extended:false}));  //
 app.use(upload.single('photo'));
 
-//const PORT=process.env.PORT||5000;
+const PORT=process.env.PORT||8081;
 
-const PORT = 8081;
+// const PORT = 8081;
 
 const mongoUrl = process.env.mongoUrl;
 
