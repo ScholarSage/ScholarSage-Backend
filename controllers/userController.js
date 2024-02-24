@@ -1,4 +1,5 @@
 const User = require("../models/userModel");
+const StudentMentor = require("../models/StudentMentorModel");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
@@ -25,48 +26,50 @@ const StudentRegister = async(req,res)=>{
     
         if (!fname || fname.trim() === "") {
             console.log("First Name is required");
-            return res.send({ error: 'First Name is required' });
+            return res.status(200).send({ error: 'First Name is required' });
           }
 
           if (!lname || lname.trim() === "") {
             console.log("Last Name is required");
-            return res.send({ error: 'Last Name is required' });
+            return res.status(200).send({ error: 'Last Name is required' });
           }
     
         if(!emailValidator.validate(email)){
             console.log("Invalid Email");
-            return res.send({error:'Email is invalid'});
+            return res.status(200).send({error:'Email is invalid'});
     
         }
     
         const oldUser = await User.findOne({email});
         if(oldUser){
-            return res.json({error:"Email Already Used"});
+            return res.status(200).json({error:"Email Already Used"});
         }
     
         const scnumberRegx = /^SC\/\d{4}\/\d{5}$/;
         if(!scnumberRegx.test(scnumber)){
             console.log("Invalid Student ID");
-            return res.send({error:"Invalid Student Number"});
+            return res.status(200).send({error:"Invalid Student Number"});
         }
     
         const oldscnumber = await User.findOne({scnumber});
         if(oldscnumber){
-            return res.json({error:"Student Number Already Used"});
+            return res.status(200).json({error:"Student Number Already Used"});
         }
     
         const passwordRegx = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+])[0-9a-zA-Z!@#$%^&*()_+]{8,}$/;
         if(!passwordRegx.test(password)){
             console.log("Password format incorrect");
-            return res.send({error:"Password format incorrect"});
+            return res.status(200).send({error:"Password format incorrect"});
         }
     
         if (password !== confirmpassword) {
             console.log("Confirm Password DO Not Match");   //for security
-            return res.json({ error: 'Passwords do not match' });
+            return res.status(200).json({ error: 'Passwords do not match' });
           }
         
-        const encryptedPassword = await bcrypt.hash(password,10);
+          const salt = await bcrypt.genSalt(10);
+
+          const encryptedPassword = await bcrypt.hash(password,salt);
     
         await User.create({
             fname,
@@ -76,9 +79,10 @@ const StudentRegister = async(req,res)=>{
             password:encryptedPassword,
             usertype,
         });
-        res.send({status:"ok"}) 
+        res.status(200).send({status:"ok"}) 
         }catch (error) {
-            res.send({status:"error"})
+            console.log(error);
+            res.status(500).send({status:"error"})
         }
     };
 
@@ -89,41 +93,43 @@ const StudentRegister = async(req,res)=>{
     
             if (!fname || fname.trim() === "") {
                 console.log("First Name is required");
-                return res.send({ error: 'First Name is required' });
+                return res.status(200).send({ error: 'First Name is required' });
               }
     
               if (!lname || lname.trim() === "") {
                 console.log("Last Name is required");
-                return res.send({ error: 'Last Name is required' });
+                return res.status(200).send({ error: 'Last Name is required' });
               }
     
             if(!emailValidator.validate(email)){
                 console.log("Invalid Email");
-                return res.send({error:'Email is invalid'});
+                return res.status(200).send({error:'Email is invalid'});
             }
         
             const oldUser = await User.findOne({email});
             if(oldUser){
-                return res.json({error:"Email Already Exists"});
+                return res.status(200).json({error:"Email Already Exists"});
             }
     
             const oldmentorid = await User.findOne({mentorid});
             if(oldmentorid){
-            return res.json({error:"Mentor ID Already Used"});
+            return res.status(200).json({error:"Mentor ID Already Used"});
             }
     
             const passwordRegx = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+])[0-9a-zA-Z!@#$%^&*()_+]{8,}$/;
             if(!passwordRegx.test(password)){
             console.log("Password format incorrect");
-            return res.send({error:"Password format incorrect"});
+            return res.status(200).send({error:"Password format incorrect"});
             }
     
             if (password !== confirmpassword) {
             console.log("Confirm Password DO Not Match");   //for security
-            return res.json({ error: 'Passwords do not match' });
+            return res.status(200).json({ error: 'Passwords do not match' });
             }
     
-            const encryptedPassword = await bcrypt.hash(password,10);
+            const salt = await bcrypt.genSalt(10);
+
+            const encryptedPassword = await bcrypt.hash(password,salt);
     
             await User.create({
                 fname,
@@ -133,52 +139,79 @@ const StudentRegister = async(req,res)=>{
                 password:encryptedPassword,
                 usertype,
             });
-            res.send({status:"ok"}) 
+            res.status(200).send({status:"ok"}) 
             }catch (error) {
-                res.send({status:"error"})
+                console.log(error);
+                res.status(500).send({status:"error"})
             }
         };
 
         const LoginUser = async(req,res)=>{
             const {email,password} = req.body;
-            const user = await User.findOne({email});
-            if(!user){
-                return res.json({error:"User Not found"});
-            }
-            if(await bcrypt.compare(password,user.password)){
-                const token = jwt.sign({email:user.email},JWT_SECRET,{
-                    expiresIn:"24h",
-                });
-                if(res.status(201)){
-                    return res.json({status:"ok",data:token,UT:user.usertype});
-                }else{
-                    return res.json({error:"error"});
+            try {
+                const user = await User.findOne({email});
+                if(!user){
+                    return res.status(200).json({error:"User Not found"});
                 }
+                if(await bcrypt.compare(password,user.password)){
+                    const token = jwt.sign({email:user.email},JWT_SECRET,{
+                        expiresIn:"24h",
+                    });
+                    // if(res.status(201)){
+                    //     return res.json({status:"ok",data:token,UT:user.usertype});
+                    // }else{
+                    //     return res.json({error:"error"});
+                    // }
+    
+                    return res.status(200).json({status:"ok",data:token,UT:user.usertype,isApproved:user.isApproved});
+                }
+                res.status(200).json({status:"error",error:"Invalid Password"});
+                
+            } catch (error) {
+                console.log(error)
+                res.status(500).send({message:"Error logging in",status:"Error",error});
             }
-            res.json({status:"error",error:"Invalid Password"});
+
         };
 
         const UserData = async(req,res)=>{
-            const{token}=req.body;
-            try {
-                const user = jwt.verify(token,JWT_SECRET,(err,res)=>{
-                    if(err){
-                        return "token expired";
-                    }
-                    return res;  //return user as decoded payload(include email)  (Return value is always returned to the first callback function)
-                });
-                console.log(user);
-                if(user=="token expired"){
-                    return res.send({status:"error",data:"token expired"});
-                }
-                const useremail = user.email;
-                User.findOne({email:useremail}).then((data)=>{
-                    res.send({status:"ok",data:data});
-                }).catch((error)=>{
-                    res.send({status:"error",data:error});
-                });
-            } catch (error) {
+            // const{token}=req.body;
+            // try {
+            //     const user = jwt.verify(token,JWT_SECRET,(err,res)=>{
+            //         if(err){
+            //             return "token expired";
+            //         }
+            //         return res;  //return user as decoded payload(include email)  (Return value is always returned to the first callback function)
+            //     });
+            //     console.log(user);
+            //     if(user=="token expired"){
+            //         return res.send({status:"error",data:"token expired"});
+            //     }
+            //     const useremail = user.email;
+            //     User.findOne({email:useremail}).then((data)=>{
+            //         res.send({status:"ok",data:data});
+            //     }).catch((error)=>{
+            //         res.send({status:"error",data:error});
+            //     });
+            // } catch (error) {
                 
+            // }
+            const email = req.body.email;
+            try {
+                const user = await User.findOne({email});
+                user.password = undefined;
+                if(!user){
+                    console.log("error line 201");
+                    return res.status(200).send({message:"User does not exists",status:"error"});
+                }else{
+                    res.status(200).send({
+                        status:"ok",
+                        data:user
+                    });
+                }
+            } catch (error) {
+                console.log(error);
+                res.status(500).send({message:"Error getting userData",status:"error"});
             }
         };
 
@@ -272,6 +305,73 @@ const StudentRegister = async(req,res)=>{
                 res.send("Something Went Wrong");
             }
         };
+
+        const MentorApproval = async(req,res)=>{
+            const {id,status} = req.params;
+            try {
+                const mentor = await User.findOne({_id:id});
+                if(!mentor){
+                    return res.status(200).send({status:"error",message:"Mentor not found"});
+                }
+                if(status==="ok"){
+                    mentor.isApproved = true;
+                    await mentor.save();
+                    res.status(200).send({status:"ok",message:"Mentor approved successfully"});
+                    const mentorApprovalMessage=`Hi ${mentor.fname}. Your mentor account of ScholarSage under ${mentor.email} has been approved successfully and now you can log in to your account`
+                    var transporter = nodemailer.createTransport({
+                        service: 'gmail',
+                        auth: {
+                          user: nodemailerUser,
+                          pass: nodemailerUserPassword
+                        }
+                      });
+                      
+                      var mailOptions = {
+                        from: nodemailerUser,
+                        to: mentor.email,
+                        subject: 'ScholarSage Mentor Account Approval',
+                        text: mentorApprovalMessage
+                      };
+                      
+                      transporter.sendMail(mailOptions, function(error, info){
+                        if (error) {
+                          console.log(error);
+                        } else {
+                          //console.log('Email sent: ' + info.response);
+                          res.send({status:"Email has been sent"});
+                        }
+                      });
+                }
+                
+            } catch (error) {
+                res.status(500).sned({status:"error",message:"Somthing went wrong"});
+                console.log(error);
+            }
+        }
+
+        const MentorRequestList = async (req, res) => {
+            try {
+                const mentors = await User.find({ usertype: 'Mentor', isApproved: false });
+                res.status(200).json({ status: 'ok', data: mentors });
+            } catch (error) {
+                console.error(error);
+                res.status(500).json({ status: 'error', message: 'Error getting mentor list' });
+            }
+        };
+
+        const StudentMentorAssign = async (res,req) => {
+            try {
+                const mentors = await User.find({usertype:'Mentor',isApproved:true});
+                if(!mentors){
+                    res.status(200).send({status:'error',message:'No mentors'});
+                }
+                // const lessWorkMentors = await StudentMentor.find 
+            } catch (error) {
+                
+            }
+        }        
+        
+        
 
         const SaveChanges = async (req, res) => {
           const { id } = req.params;
@@ -404,3 +504,5 @@ const StudentRegister = async(req,res)=>{
     exports.SaveChanges=SaveChanges;
     exports.UploadPhoto=UploadPhoto;
     exports.DeletePhoto=DeletePhoto;
+    exports.MentorApproval=MentorApproval;
+    exports.MentorRequestList = MentorRequestList;
