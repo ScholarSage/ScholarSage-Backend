@@ -14,8 +14,8 @@ router.post("/reset-password/:id/:token",ResetPasswordAfterSubmit);
 router.post("/update-profile",SaveChanges);
 router.post("/upload-photo", UploadPhoto);
 router.post("/delete-photo",DeletePhoto);
-router.put("/Approve-Mentor/:id",MentorApproval)
-router.post("/mentor-request-list", MentorRequestList)
+router.put("/Approve-Mentor/:id/:status",MentorApproval);
+router.post("/mentor-request-list", MentorRequestList);
 
 
 module.exports = router;

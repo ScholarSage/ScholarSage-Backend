@@ -5,6 +5,6 @@ const StudentMentorSchema = new mongoose.Schema({
     mentorID:{type:String,required:true}
 });
 
-const StudentMentor = mongoose.model("StudnetMentor",StudentMentorSchema);
+const StudentMentor = mongoose.model("StudentMentor",StudentMentorSchema);
 
 module.exports = StudentMentor;

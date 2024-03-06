@@ -6,6 +6,7 @@ const nodemailer = require('nodemailer');
 const emailValidator = require("email-validator");
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' }); // Set the destination folder for file uploads
+const mongoose=require('mongoose');
 
 require('dotenv').config();
 
@@ -79,10 +80,19 @@ const StudentRegister = async(req,res)=>{
             password:encryptedPassword,
             usertype,
         });
-        res.status(200).send({status:"ok"}) 
+        res.status(200).send({status:"ok"});
+
+        await StudentMentorAssign().then((result) => {
+            // res.status(200).send(result);
+            console.log(result)
+        }).catch((error) => {
+            console.error(error);
+            // res.status(500).send({ status: 'error', message: 'Error assigning mentor to student' });
+        });
+
         }catch (error) {
             console.log(error);
-            res.status(500).send({status:"error"})
+            return res.status(500).send({status:"error"})
         }
     };
 
@@ -308,8 +318,9 @@ const StudentRegister = async(req,res)=>{
 
         const MentorApproval = async(req,res)=>{
             const {id,status} = req.params;
+            const objectId = new mongoose.Types.ObjectId(id);
             try {
-                const mentor = await User.findOne({_id:id});
+                const mentor = await User.findOne({_id:objectId});
                 if(!mentor){
                     return res.status(200).send({status:"error",message:"Mentor not found"});
                 }
@@ -328,7 +339,8 @@ const StudentRegister = async(req,res)=>{
                       
                       var mailOptions = {
                         from: nodemailerUser,
-                        to: mentor.email,
+                        // to: mentor.email,
+                        to:nodemailerReceiver,
                         subject: 'ScholarSage Mentor Account Approval',
                         text: mentorApprovalMessage
                       };
@@ -341,10 +353,19 @@ const StudentRegister = async(req,res)=>{
                           res.send({status:"Email has been sent"});
                         }
                       });
+
+                      await StudentMentorAssign().then((result) => {
+                        // res.status(200).send(result);
+                        console.log(result);
+                    }).catch((error) => {
+                        console.error(error);
+                        // res.status(500).send({ status: 'error', message: 'Error assigning mentor to student' });
+                    });
+
                 }
                 
             } catch (error) {
-                res.status(500).sned({status:"error",message:"Somthing went wrong"});
+                res.status(500).send({status:"error",message:"Somthing went wrong"});
                 console.log(error);
             }
         }
@@ -359,15 +380,83 @@ const StudentRegister = async(req,res)=>{
             }
         };
 
-        const StudentMentorAssign = async (res,req) => {
+        const StudentMentorAssign = async () => {
             try {
-                const mentors = await User.find({usertype:'Mentor',isApproved:true});
-                if(!mentors){
-                    res.status(200).send({status:'error',message:'No mentors'});
+                const Approvedmentors = await User.find({usertype:'Mentor',isApproved:true});
+                if(!Approvedmentors|| Approvedmentors.length === 0){
+                    return {status:'error',message:'No mentors to connect'};
                 }
-                // const lessWorkMentors = await StudentMentor.find 
-            } catch (error) {
+
+                const students = await User.find({usertype:'Student'});
+                if(!students){
+                    return {status:'error',message:'No students to connect'};
+                }
+
+                const ConnectedStudents = await StudentMentor.distinct('studentID');
+
+                const unconnectedStudents = students.filter(student => !ConnectedStudents.includes(student._id.toString()));
+
+                let ConnectedMentors = await StudentMentor.distinct('mentorID');
+
+                let unconnectedMentors = Approvedmentors.filter(mentor => !ConnectedMentors.includes(mentor._id.toString()));
+
+                if(!unconnectedStudents || unconnectedStudents.length === 0){
+                    return {status:'error',message:'All students are connected'}; 
+                }
+
+                let Results = [];
+
                 
+                console.log(unconnectedStudents[0]);
+                console.log(unconnectedStudents[1]);
+                console.log(unconnectedStudents[2]);
+                console.log(unconnectedStudents[3]);
+                console.log(unconnectedMentors[0]);
+
+                for (let i = 0;i<unconnectedStudents.length;i++){
+                    let targetStudentID = unconnectedStudents[i]._id;
+                    if (unconnectedMentors.length > 0) {
+                        let targetMentorID = unconnectedMentors[0]._id;
+                        await StudentMentor.create({
+                            studentID:targetStudentID,
+                            mentorID:targetMentorID,
+                        });
+                        Results.push({status:'ok',message:'Student Successfully Connected with a new Mentor'});
+                    }else{
+                        let result = await StudentMentor.aggregate([
+                                {
+                                $group: {
+                                    _id: '$mentorID',
+                                    studentCount: { $sum: 1 }
+                                }
+                                },
+                                {
+                                $sort: { studentCount: 1 }
+                                }
+                        ]);
+                        
+                        // Get the mentors with the least number of students
+                        let mentorsWithLeastStudents = result.filter(mentor => mentor.studentCount === result[0].studentCount);
+                        console.log(mentorsWithLeastStudents);
+                        if(mentorsWithLeastStudents[0].studentCount>=10){
+                            Results.push({status:'ok',message:'Mentors are busy. Wait for mentors are available'});
+                        }else{
+                            let targetMentor = mentorsWithLeastStudents[0]._id;
+                            await StudentMentor.create({
+                            studentID:targetStudentID,
+                            mentorID:targetMentor,
+                        });
+                        }
+                        Results.push({status:'ok',message:'Student Successfully Connected with a old Mentor'});
+                        
+                }
+                ConnectedMentors = await StudentMentor.distinct('mentorID');
+                unconnectedMentors = Approvedmentors.filter(mentor => !ConnectedMentors.includes(mentor._id.toString()));
+                }
+                return Results;
+
+            } catch (error) {
+                console.log(error);
             }
         }        
         
