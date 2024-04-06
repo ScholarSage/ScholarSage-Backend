@@ -1,5 +1,6 @@
 const User = require("../models/userModel");
 const StudentMentor = require("../models/StudentMentorModel");
+const PersonalityType = require("../models/personalityType");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
@@ -585,6 +586,20 @@ const StudentRegister = async(req,res)=>{
             }
           };
 
+          const PersonalityTypes = async (req, res) => {
+            const { value } = req.params;
+            try {
+              const personalityType = await PersonalityType.findOne({value});
+              if (!personalityType) {
+                res.status(404).send('Personality type not found');
+              } else {
+                res.json(personalityType);
+              }
+            } catch (error) {
+              res.status(500).send('Internal Server Error');
+            }
+          };
+
     exports.StudentRegister = StudentRegister;
     exports.MentorRegister = MentorRegister;
     exports.LoginUser = LoginUser;
@@ -597,3 +612,4 @@ const StudentRegister = async(req,res)=>{
     exports.DeletePhoto=DeletePhoto;
     exports.MentorApproval=MentorApproval;
     exports.MentorRequestList = MentorRequestList;
+    exports.PersonalityTypes  = PersonalityTypes ;
