@@ -19,6 +19,8 @@ const nodemailerUserPassword = process.env.nodemailerUserPassword;
 
 const nodemailerReceiver = process.env.nodemailerReceiver;
 
+const name = 123;
+
 
 const StudentRegister = async(req,res)=>{
     const {fname,lname,email,scnumber,password,confirmpassword,usertype}= req.body;
