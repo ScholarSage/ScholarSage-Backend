@@ -16,6 +16,7 @@ router.post("/upload-photo", UploadPhoto);
 router.post("/delete-photo",DeletePhoto);
 router.put("/Approve-Mentor/:id/:status",MentorApproval);
 router.post("/mentor-request-list", MentorRequestList);
+router.get("/personality-types/:value", PersonalityTypes);
 
 
 module.exports = router;
