@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");
 
-const { StudentRegister,MentorRegister,LoginUser,UserData,ForgetPassword,ResetPasswordBeforeSubmit,ResetPasswordAfterSubmit,SaveChanges,UploadPhoto,DeletePhoto,MentorApproval,MentorRequestList} = require("../controllers/userController");
+const { StudentRegister,MentorRegister,LoginUser,UserData,ForgetPassword,ResetPasswordBeforeSubmit,ResetPasswordAfterSubmit,SaveChanges,UploadPhoto,DeletePhoto,MentorApproval,MentorRequestList,PersonalityTypes} = require("../controllers/userController");
 
 router.post("/StudentRegister",StudentRegister);
 router.post("/MentorRegister",MentorRegister);
@@ -16,6 +16,7 @@ router.post("/upload-photo", UploadPhoto);
 router.post("/delete-photo",DeletePhoto);
 router.put("/Approve-Mentor/:id/:status",MentorApproval);
 router.post("/mentor-request-list", MentorRequestList);
+router.get("/personality-types/:value", PersonalityTypes);
 
 
 module.exports = router;
