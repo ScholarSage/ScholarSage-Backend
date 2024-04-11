@@ -1,6 +1,7 @@
 const User = require("../models/userModel");
 const StudentMentor = require("../models/StudentMentorModel");
 const PersonalityType = require("../models/personalityType");
+const Appointments = require("../models/appointmentModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
@@ -698,11 +699,11 @@ const BookAppointment = async (req, res) => {
     req.body.date = moment(req.body.date, "DD-MM-YYYY").toISOString();
     req.body.time = moment(req.body.time, "HH:mm").toISOString();
 
-    const newAppoinment = new Appoinment(req.body);
+    const newAppoinment = new Appointments(req.body);
     await newAppoinment.save();
     //pushing notifications to student based on his scnumber
     // const studen t = await student.findOne({ scnumber: req.body.scnumber });
-    const user = await user.findOne({ mentorid: req.body.mentorid });
+    const user = await User.findOne({ mentorid: req.body.mentorid });
 
     user.unseenNotification.push({
       type: "new-appointment-request",
@@ -716,7 +717,7 @@ const BookAppointment = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.Status(500).send({
+    res.status(500).send({
       message: "Error booking a appointment",
       success: false,
       error,
@@ -731,7 +732,7 @@ const checkBookingAvailability = async (req, res) => {
       .subtract(1, "hours")
       .toISOString();
     const toTime = moment(req.body.time, "HH:mm").add(1, "hours").toISOString();
-    const scnumber = req.body.mentorid;
+    const mentorid = req.body.mentorid;
 
     const appointments = await Appointments.find({
       mentorid,
@@ -765,7 +766,7 @@ const getAppointments = async (req, res) => {
     const mentor = await MentorRegister.findOne({
       mentorid: req.query.mentorid,
     });
-    const appointments = await Appointment.find({
+    const appointments = await Appointments.find({
       mentorid: mentor.mentorid,
     });
 
@@ -776,7 +777,7 @@ const getAppointments = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.Status(500).send({
+    res.status(500).send({
       message: "Error fetching appointment",
       success: false,
       error,
@@ -787,7 +788,7 @@ const getAppointments = async (req, res) => {
 const changeAppointmentStatus = async (req, res) => {
   try {
     const { appointmentId, status } = req.body;
-    const appointment = await Appointment.findOnebyIdAndUpdate(appointmentId, {
+    const appointment = await Appointments.findOnebyIdAndUpdate(appointmentId, {
       status,
     });
 

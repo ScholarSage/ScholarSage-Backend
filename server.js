@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 8081;
 // const PORT = 8081;
 //const PORT = process.env.PORT || 8081;
 
-const mongoUrl = process.env.MONGO_URI;
+const mongoUrl = process.env.mongoUrl;
 
 mongoose
   .connect(mongoUrl)
