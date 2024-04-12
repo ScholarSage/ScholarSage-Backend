@@ -796,7 +796,7 @@ const changeAppointmentStatus = async (req, res) => {
     const unseenNotifications = student.unseenNotification;
 
     unseenNotifications.push({
-      typr: "Appointment-status-changed",
+      type: "Appointment-status-changed",
       messsage: `Your appointment status has been changed ${status}`,
       onClickPath: "/appointments",
     });
@@ -817,6 +817,68 @@ const changeAppointmentStatus = async (req, res) => {
   }
 };
 
+const markAllNotificationsAsSeen = async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.body.scnumber });
+    if (!user) {
+      return res.status(404).send({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    const unseenNotification = user.unseenNotification || [];
+    const seenNotification = user.seenNotification || [];
+
+    seenNotification.push(...unseenNotification);
+
+    user.unseenNotification = [];
+    user.seenNotification = seenNotification;
+    const updateUser = await user.save();
+    updateUser.password = undefined;
+    res.status(200).send({
+      message: "All notifications marked as seen",
+      success: true,
+      data: updateUser,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      message: "Error marking notifications as seen",
+      success: false,
+      error,
+    });
+  }
+};
+const deleteAllNotifications = async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.body.scnumber });
+
+    if (!user) {
+      return res.status(404).send({
+        message: "User not found",
+        success: false,
+      });
+    }
+
+    user.seenNotification = [];
+
+    const updateUser = await user.save();
+    updateUser.password = undefined;
+    res.status(200).send({
+      message: "All seen notifications are deleted",
+      success: true,
+      data: updateUser,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      message: "Error deleting seen notifications",
+      success: false,
+      error,
+    });
+  }
+};
 exports.StudentRegister = StudentRegister;
 exports.MentorRegister = MentorRegister;
 exports.LoginUser = LoginUser;
@@ -838,3 +900,6 @@ exports.BookAppointment = BookAppointment;
 exports.getAppointments = getAppointments;
 exports.changeAppointmentStatus = changeAppointmentStatus;
 exports.checkBookingAvailability = checkBookingAvailability;
+exports.markAllNotificationsAsSeen = markAllNotificationsAsSeen;
+
+exports.deleteAllNotifications = deleteAllNotifications;
