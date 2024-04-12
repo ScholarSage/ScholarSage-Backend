@@ -21,6 +21,8 @@ const {
   checkBookingAvailability,
   getAppointments,
   changeAppointmentStatus,
+  markAllNotificationsAsSeen,
+  deleteAllNotifications,
 } = require("../controllers/userController");
 
 router.post("/StudentRegister", StudentRegister);
@@ -42,6 +44,8 @@ router.post("/change-password", ChangePassword);
 router.post("/book-appointment", BookAppointment);
 router.post("/check-booking-availability", checkBookingAvailability);
 router.post("/get-appointments-by-user-id", getAppointments);
-router.post("change-appointment-status", changeAppointmentStatus);
+router.post("/change-appointment-status", changeAppointmentStatus);
+router.post("/mark-all-notifications-as-seen", markAllNotificationsAsSeen);
+router.post("/delete-all-notifications", deleteAllNotifications);
 
 module.exports = router;
