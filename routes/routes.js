@@ -48,4 +48,5 @@ router.post("/change-appointment-status", changeAppointmentStatus);
 router.post("/mark-all-notifications-as-seen", markAllNotificationsAsSeen);
 router.post("/delete-all-notifications", deleteAllNotifications);
 
+
 module.exports = router;
