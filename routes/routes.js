@@ -18,11 +18,12 @@ const {
   PersonalityTypes,
   ChangePassword,
   BookAppointment,
-  checkBookingAvailability,
-  getAppointments,
-  changeAppointmentStatus,
-  markAllNotificationsAsSeen,
-  deleteAllNotifications,
+  CheckBookingAvailability,
+  GetAppointmentsStudent,
+  GetAppointmentsMentor,
+  ChangeAppointmentStatus,
+  MarkAsSeen,
+  DeleteAllNotifications,
 } = require("../controllers/userController");
 
 router.post("/StudentRegister", StudentRegister);
@@ -42,10 +43,12 @@ router.get("/personality-types/:value", PersonalityTypes);
 router.post("/delete-photo", DeletePhoto);
 router.post("/change-password", ChangePassword);
 router.post("/book-appointment", BookAppointment);
-router.post("/check-booking-availability", checkBookingAvailability);
-router.post("/get-appointments-by-user-id", getAppointments);
-router.post("/change-appointment-status", changeAppointmentStatus);
-router.post("/mark-all-notifications-as-seen", markAllNotificationsAsSeen);
-router.post("/delete-all-notifications", deleteAllNotifications);
+router.post("/check-booking-availability", DeleteAllNotifications);
+router.get("/get-appointments-student", GetAppointmentsStudent);
+router.get("/get-appointments-mentor", GetAppointmentsMentor);
+
+router.post("/change-appointment-status", ChangeAppointmentStatus);
+router.post("/mark-as-seen", MarkAsSeen);
+router.post("/delete-all-notifications", DeleteAllNotifications);
 
 module.exports = router;
