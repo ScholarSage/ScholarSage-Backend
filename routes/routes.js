@@ -43,13 +43,12 @@ router.get("/personality-types/:value", PersonalityTypes);
 router.post("/delete-photo", DeletePhoto);
 router.post("/change-password", ChangePassword);
 router.post("/book-appointment", BookAppointment);
-router.post("/check-booking-availability", DeleteAllNotifications);
+router.post("/check-booking-availability", CheckBookingAvailability);
 router.get("/get-appointments-student", GetAppointmentsStudent);
 router.get("/get-appointments-mentor", GetAppointmentsMentor);
 
 router.post("/change-appointment-status", ChangeAppointmentStatus);
 router.post("/mark-as-seen", MarkAsSeen);
 router.post("/delete-all-notifications", DeleteAllNotifications);
-
 
 module.exports = router;

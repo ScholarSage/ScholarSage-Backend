@@ -705,13 +705,17 @@ const BookAppointment = async (req, res) => {
 
     const newAppoinment = new Appointments(req.body);
     await newAppoinment.save();
-    //pushing notifications to student based on his scnumber
+
     // const studen t = await student.findOne({ scnumber: req.body.scnumber });
     const user = await User.findOne({ mentorid: req.body.mentorid });
 
+    //pushing notifications to student based on his scnumber
+
     user.unseenNotifications.push({
       type: "new-appointment-request",
-      message: `a new appoinment request has been made by ${req.body.userInfo.name}`,
+      // message: `a new appoinment request has been made by ${req.body.userInfo.scnumber}`,
+      message: `a new appoinment request has been made by `,
+
       onClickPath: "/mentor/appointments",
     });
     await user.save();
@@ -769,8 +773,8 @@ const GetAppointmentsStudent = async (req, res) => {
   try {
     const student = await User.findOne({ scnumber: req.body.scnumber });
 
-    const appointments = await Appointments.find({
-      _id: id,
+    const appointments = await Appointments.findOne({
+      _id: req.body.scnumber,
     });
 
     res.status(200).send({
@@ -790,11 +794,11 @@ const GetAppointmentsStudent = async (req, res) => {
 
 const GetAppointmentsMentor = async (req, res) => {
   try {
-    const mentor = await MentorRegister.findOne({
+    const mentor = await User.findOne({
       mentorid: req.query.mentorid,
     });
-    const appointments = await Appointments.find({
-      _id: id,
+    const appointments = await Appointments.findOne({
+      _id: req.body.mentorid,
     });
 
     res.status(200).send({
@@ -827,12 +831,11 @@ const ChangeAppointmentStatus = async (req, res) => {
       messsage: `Your appointment status has been changed ${status}`,
       onClickPath: "/appointments",
     });
-    await student.save();
+    await student.saveInfo();
 
     res.status(200).send({
       message: "Appointment status changed successfully",
       success: true,
-      data: MentorRegister,
     });
   } catch (error) {
     console.log(error);
