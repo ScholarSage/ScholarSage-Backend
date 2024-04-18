@@ -509,7 +509,9 @@ const SaveChanges = async (req, res) => {
     currentPassword,
     newPassword,
     confirmPassword,
-    cancelChanges, // New parameter to check if the cancel button is clicked
+    cancelChanges,
+    //seenNotifications,
+    //unseenNotifications,
   } = req.body;
 
   // Handle file upload (assuming you have a field named 'photo' in your form)
@@ -539,6 +541,8 @@ const SaveChanges = async (req, res) => {
           city: city,
           state: state,
           photoUrl: cancelChanges ? tempPhotoUrl : photoUrl, // Use tempPhotoUrl if cancelChanges is true
+          //unseenNotifications:unseenNotifications,
+          //seenNotifications:seenNotifications
         },
       }
     );
@@ -701,13 +705,17 @@ const BookAppointment = async (req, res) => {
 
     const newAppoinment = new Appointments(req.body);
     await newAppoinment.save();
-    //pushing notifications to student based on his scnumber
+
     // const studen t = await student.findOne({ scnumber: req.body.scnumber });
     const user = await User.findOne({ mentorid: req.body.mentorid });
 
-    user.unseenNotification.push({
+    //pushing notifications to student based on his scnumber
+
+    user.unseenNotifications.push({
       type: "new-appointment-request",
-      message: `a new appoinment request has been made by ${req.body.userInfo.name}`,
+      // message: `a new appoinment request has been made by ${req.body.userInfo.scnumber}`,
+      message: `a new appoinment request has been made by `,
+
       onClickPath: "/mentor/appointments",
     });
     await user.save();
@@ -725,7 +733,7 @@ const BookAppointment = async (req, res) => {
   }
 };
 
-const checkBookingAvailability = async (req, res) => {
+const CheckBookingAvailability = async (req, res) => {
   try {
     const date = moment(req.body.date, "DD-MM-YYYY").toISOString();
     const fromTime = moment(req.body.time, "HH:mm")
@@ -761,13 +769,12 @@ const checkBookingAvailability = async (req, res) => {
   }
 };
 
-const getAppointments = async (req, res) => {
+const GetAppointmentsStudent = async (req, res) => {
   try {
-    const mentor = await MentorRegister.findOne({
-      mentorid: req.query.mentorid,
-    });
-    const appointments = await Appointments.find({
-      mentorid: mentor.mentorid,
+    const student = await User.findOne({ scnumber: req.body.scnumber });
+
+    const appointments = await Appointments.findOne({
+      _id: req.body.scnumber,
     });
 
     res.status(200).send({
@@ -785,7 +792,31 @@ const getAppointments = async (req, res) => {
   }
 };
 
-const changeAppointmentStatus = async (req, res) => {
+const GetAppointmentsMentor = async (req, res) => {
+  try {
+    const mentor = await User.findOne({
+      mentorid: req.query.mentorid,
+    });
+    const appointments = await Appointments.findOne({
+      _id: req.body.mentorid,
+    });
+
+    res.status(200).send({
+      message: "Appointment fetched successfully ",
+      success: true,
+      data: appointments,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      message: "Error fetching appointment",
+      success: false,
+      error,
+    });
+  }
+};
+
+const ChangeAppointmentStatus = async (req, res) => {
   try {
     const { appointmentId, status } = req.body;
     const appointment = await Appointments.findOnebyIdAndUpdate(appointmentId, {
@@ -800,12 +831,11 @@ const changeAppointmentStatus = async (req, res) => {
       messsage: `Your appointment status has been changed ${status}`,
       onClickPath: "/appointments",
     });
-    await student.save();
+    await student.saveInfo();
 
     res.status(200).send({
       message: "Appointment status changed successfully",
       success: true,
-      data: MentorRegister,
     });
   } catch (error) {
     console.log(error);
@@ -817,9 +847,9 @@ const changeAppointmentStatus = async (req, res) => {
   }
 };
 
-const markAllNotificationsAsSeen = async (req, res) => {
+const MarkAsSeen = async (req, res) => {
   try {
-    const user = await User.findOne({ _id: req.body.scnumber });
+    const user = await User.findOne({ mentorid: req.body.mentorid });
     if (!user) {
       return res.status(404).send({
         message: "User not found",
@@ -827,14 +857,24 @@ const markAllNotificationsAsSeen = async (req, res) => {
       });
     }
 
-    const unseenNotification = user.unseenNotification || [];
-    const seenNotification = user.seenNotification || [];
+    const unseenNotifications = user.unseenNotifications || [];
+    const seenNotifications = user.seenNotifications || [];
 
-    seenNotification.push(...unseenNotification);
+    //  seenNotifications.push(...unseenNotifications);
+    //   user.unseenNotifications = [];
+    //   user.seenNotifications = unseenNotifications;
 
-    user.unseenNotification = [];
-    user.seenNotification = seenNotification;
-    const updateUser = await user.save();
+    user.seenNotifications.push({
+      type: "new-appointment-request",
+      message: `a new appoinment request has been made by `,
+      onClickPath: "/mentor/appointments",
+    });
+
+    const updateUser = await User.updateOne(
+      { _id: req.body.mentorid },
+      { unseenNotifications: [], seenNotifications: seenNotifications }
+    );
+    //const updateUser = await User.save();
     updateUser.password = undefined;
     res.status(200).send({
       message: "All notifications marked as seen",
@@ -850,10 +890,10 @@ const markAllNotificationsAsSeen = async (req, res) => {
     });
   }
 };
-const deleteAllNotifications = async (req, res) => {
-  try {
-    const user = await User.findOne({ _id: req.body.scnumber });
 
+const DeleteAllNotifications = async (req, res) => {
+  try {
+    const user = await User.findOne({ mentorid: req.body.mentorid });
     if (!user) {
       return res.status(404).send({
         message: "User not found",
@@ -863,10 +903,11 @@ const deleteAllNotifications = async (req, res) => {
 
     user.seenNotification = [];
 
-    const updateUser = await user.save();
+    const updateUser = await User.updateOne();
+    //const updateUser = await User.save();
     updateUser.password = undefined;
     res.status(200).send({
-      message: "All seen notifications are deleted",
+      message: "All seen notifications deleted",
       success: true,
       data: updateUser,
     });
@@ -879,6 +920,7 @@ const deleteAllNotifications = async (req, res) => {
     });
   }
 };
+
 exports.StudentRegister = StudentRegister;
 exports.MentorRegister = MentorRegister;
 exports.LoginUser = LoginUser;
@@ -897,9 +939,10 @@ exports.UpdateProfile = UpdateProfile;
 
 exports.ChangePassword = ChangePassword;
 exports.BookAppointment = BookAppointment;
-exports.getAppointments = getAppointments;
-exports.changeAppointmentStatus = changeAppointmentStatus;
-exports.checkBookingAvailability = checkBookingAvailability;
-exports.markAllNotificationsAsSeen = markAllNotificationsAsSeen;
+exports.GetAppointmentsStudent = GetAppointmentsStudent;
+exports.GetAppointmentsMentor = GetAppointmentsMentor;
 
-exports.deleteAllNotifications = deleteAllNotifications;
+exports.ChangeAppointmentStatus = ChangeAppointmentStatus;
+exports.CheckBookingAvailability = CheckBookingAvailability;
+exports.MarkAsSeen = MarkAsSeen;
+exports.DeleteAllNotifications = DeleteAllNotifications;
