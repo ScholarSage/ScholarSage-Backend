@@ -705,9 +705,9 @@ const BookAppointment = async (req, res) => {
     // const studen t = await student.findOne({ scnumber: req.body.scnumber });
     const user = await User.findOne({ mentorid: req.body.mentorid });
 
-    user.unseenNotification.push({
+    user.unseenNotifications.push({
       type: "new-appointment-request",
-      message: `a new appoinment request has been made by ${req.body.userInfo.name}`,
+      message: `a new appoinment request has been made by ${req.body.scnumber}`,
       onClickPath: "/mentor/appointments",
     });
     await user.save();
@@ -879,6 +879,33 @@ const deleteAllNotifications = async (req, res) => {
     });
   }
 };
+
+const studentIDList = async (req, res) => {
+  const { mentorID } = req.body;
+
+  try {
+    // Find the list of student IDs associated with the mentor ID  
+    console.log(mentorID);
+    const studentIDs = await StudentMentor.find({ mentorID });
+
+    // Extract student IDs from the result
+    const studentIDList = studentIDs.map((student) => student.studentID);
+
+    // Find student details from the UserInfo table using the extracted student IDs
+    const students = await User.find(
+      { _id: { $in: studentIDList } },
+      { password: 0 }
+    );
+
+    // Send the list of students to the frontend as a response
+    res.status(200).json({ students });
+  } catch (error) {
+    // Handle any errors
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 exports.StudentRegister = StudentRegister;
 exports.MentorRegister = MentorRegister;
 exports.LoginUser = LoginUser;
@@ -892,6 +919,7 @@ exports.DeletePhoto = DeletePhoto;
 exports.MentorApproval = MentorApproval;
 exports.MentorRequestList = MentorRequestList;
 exports.PersonalityTypes = PersonalityTypes;
+exports.studentIDList = studentIDList;
 
 exports.UpdateProfile = UpdateProfile;
 
