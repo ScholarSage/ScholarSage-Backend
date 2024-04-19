@@ -9,5 +9,6 @@ const appoinmentSchema = new mongoose.Schema({
   status: { type: String, required: true, default: "pending" },
 });
 
-const appointmentModel = mongoose.model("appointment", appoinmentSchema);
-module.exports = appointmentModel;
+const appointment = mongoose.model("appointment", appoinmentSchema);
+
+module.exports = appointment;

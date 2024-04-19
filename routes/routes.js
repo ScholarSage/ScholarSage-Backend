@@ -18,12 +18,19 @@ const {
   PersonalityTypes,
   ChangePassword,
   BookAppointment,
+  CheckBookingAvailability,
+  GetAppointmentsStudent,
+  GetAppointmentsMentor,
+  ChangeAppointmentStatus,
+  MarkAsSeen,
+  DeleteAllNotifications,
   checkBookingAvailability,
   getAppointments,
   changeAppointmentStatus,
   markAllNotificationsAsSeen,
   deleteAllNotifications,
   studentIDList,
+  MentorGet,
 } = require("../controllers/userController");
 
 router.post("/StudentRegister", StudentRegister);
@@ -37,17 +44,20 @@ router.post("/update-profile", SaveChanges);
 router.post("/upload-photo", UploadPhoto);
 router.post("/delete-photo", DeletePhoto);
 router.put("/Approve-Mentor/:id/:status", MentorApproval);
-router.post("/mentor-request-list", MentorRequestList);
+router.get("/mentor-request-list", MentorRequestList);
 router.get("/personality-types/:value", PersonalityTypes);
 router.post("/studentList", studentIDList);
+router.post("/MentorGet",MentorGet);
 
 router.post("/delete-photo", DeletePhoto);
 router.post("/change-password", ChangePassword);
 router.post("/book-appointment", BookAppointment);
-router.post("/check-booking-availability", checkBookingAvailability);
-router.post("/get-appointments-by-user-id", getAppointments);
-router.post("/change-appointment-status", changeAppointmentStatus);
-router.post("/mark-all-notifications-as-seen", markAllNotificationsAsSeen);
-router.post("/delete-all-notifications", deleteAllNotifications);
+router.post("/check-booking-availability", CheckBookingAvailability);
+router.get("/get-appointments-student", GetAppointmentsStudent);
+router.post("/get-appointments-mentor", GetAppointmentsMentor);
+
+router.post("/change-appointment-status", ChangeAppointmentStatus);
+router.post("/mark-as-seen", MarkAsSeen);
+router.post("/delete-all-notifications", DeleteAllNotifications);
 
 module.exports = router;
