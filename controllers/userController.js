@@ -301,7 +301,7 @@ const ResetPasswordAfterSubmit = async (req, res) => {
   const { password, confirmpassword } = req.body;
   if (password !== confirmpassword) {
     console.log("password not matched with confirm password");
-    return res.json({ status: "password not matched with confirm password" });
+    return res.json({ status: "password not matched with confirm password" });  object
   }
   const oldUser = await User.findOne({ _id: id });
   if (!oldUser) {
@@ -387,7 +387,7 @@ const MentorApproval = async (req, res) => {
   }
 };
 
-const MentorRequestList = async (req, res) => {
+const MentorRequestList = async (req,res) => {
   try {
     const mentors = await User.find({ usertype: "Mentor", isApproved: false });
     res.status(200).json({ status: "ok", data: mentors });
@@ -794,17 +794,11 @@ const GetAppointmentsStudent = async (req, res) => {
 
 const GetAppointmentsMentor = async (req, res) => {
   try {
-    const mentor = await User.findOne({
-      mentorid: req.query.mentorid,
-    });
-    const appointments = await Appointments.findOne({
-      _id: req.body.mentorid,
-    });
-
-    res.status(200).send({
-      message: "Appointment fetched successfully ",
-      success: true,
-      data: appointments,
+    const { mentorID } = req.body;
+    const appointments = await Appointments.find({ mentorid: mentorID });
+    res.status(200).json({
+      status: "ok",
+      appointments,
     });
   } catch (error) {
     console.log(error);
@@ -848,8 +842,10 @@ const ChangeAppointmentStatus = async (req, res) => {
 };
 
 const MarkAsSeen = async (req, res) => {
+  const {id} = req.body;
+  const objectId = new mongoose.Types.ObjectId(id);
   try {
-    const user = await User.findOne({ mentorid: req.body.mentorid });
+    const user = await User.findOne({ _id: objectId });
     if (!user) {
       return res.status(404).send({
         message: "User not found",
@@ -857,29 +853,41 @@ const MarkAsSeen = async (req, res) => {
       });
     }
 
-    const unseenNotifications = user.unseenNotifications || [];
-    const seenNotifications = user.seenNotifications || [];
+    await User.updateOne(
+      { _id: objectId },
+      {
+        $set: {
+          "seenNotifications": [...user.seenNotifications, ...user.unseenNotifications],
+          "unseenNotifications": [],
+        },
+      }
+    );
+
+    // const unseenNotifications = user.unseenNotifications || [];
+    // const seenNotifications = user.seenNotifications || [];
+
+
 
     //  seenNotifications.push(...unseenNotifications);
     //   user.unseenNotifications = [];
     //   user.seenNotifications = unseenNotifications;
 
-    user.seenNotifications.push({
-      type: "new-appointment-request",
-      message: `a new appoinment request has been made by `,
-      onClickPath: "/mentor/appointments",
-    });
+    // user.seenNotifications.push({
+    //   type: "new-appointment-request",
+    //   message: `a new appoinment request has been made by `,
+    //   onClickPath: "/mentor/appointments",
+    // });
 
-    const updateUser = await User.updateOne(
-      { _id: req.body.mentorid },
-      { unseenNotifications: [], seenNotifications: seenNotifications }
-    );
-    //const updateUser = await User.save();
-    updateUser.password = undefined;
+    // const updateUser = await User.updateOne(
+    //   { _id: req.body.mentorid },
+    //   { unseenNotifications: [], seenNotifications: seenNotifications }
+    // );
+    // //const updateUser = await User.save();
+    // updateUser.password = undefined;
     res.status(200).send({
       message: "All notifications marked as seen",
       success: true,
-      data: updateUser,
+      // data: updateUser,
     });
   } catch (error) {
     console.log(error);
@@ -892,8 +900,10 @@ const MarkAsSeen = async (req, res) => {
 };
 
 const DeleteAllNotifications = async (req, res) => {
+  const {id} = req.body;
+  const objectId = new mongoose.Types.ObjectId(id);
   try {
-    const user = await User.findOne({ mentorid: req.body.mentorid });
+    const user = await User.findOne({ _id: objectId });
     if (!user) {
       return res.status(404).send({
         message: "User not found",
@@ -901,15 +911,21 @@ const DeleteAllNotifications = async (req, res) => {
       });
     }
 
-    user.seenNotification = [];
+    await User.updateOne(
+      { _id: objectId },
+      {
+        $set: {
+          "seenNotifications": [],
+        },
+      }
+    );
 
-    const updateUser = await User.updateOne();
+    // const updateUser = await User.updateOne();
     //const updateUser = await User.save();
-    updateUser.password = undefined;
+    // updateUser.password = undefined;
     res.status(200).send({
       message: "All seen notifications deleted",
       success: true,
-      data: updateUser,
     });
   } catch (error) {
     console.log(error);
@@ -918,6 +934,61 @@ const DeleteAllNotifications = async (req, res) => {
       success: false,
       error,
     });
+  }
+};
+
+const studentIDList = async (req, res) => {
+  const { mentorID } = req.body;
+
+  try {
+    // Find the list of student IDs associated with the mentor ID  
+    console.log(mentorID);
+    const studentIDs = await StudentMentor.find({ mentorID });
+
+    // Extract student IDs from the result
+    const studentIDList = studentIDs.map((student) => student.studentID);
+
+    // Find student details from the UserInfo table using the extracted student IDs
+    const students = await User.find(
+      { _id: { $in: studentIDList } },
+      { password: 0 }
+    );
+
+    // Send the list of students to the frontend as a response
+    res.status(200).json({ students });
+  } catch (error) {
+    // Handle any errors
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const MentorGet = async (req, res) => {
+  const { scnumber } = req.body;
+
+  try {
+    // Find the mentor ID associated with the given student SC number
+    const studentMentor = await StudentMentor.findOne({ studentID: scnumber });
+    if (!studentMentor) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    const mentorID = studentMentor.mentorID;
+
+    // Find the mentor document associated with the given mentor ID
+    const mentor = await User.findOne({ _id: mentorID, usertype: "Mentor" });
+    if (!mentor) {
+      return res.status(200).json({status:"Mentor Not Found" });
+    }
+
+    // Remove sensitive fields from the mentor document
+    const { password, seenNotifications, unseenNotifications, ...mentorWithoutSensitiveFields } = mentor.toObject();
+
+    // Send the mentor document as a response
+    res.status(200).json({status:"ok",data:mentorWithoutSensitiveFields});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -934,6 +1005,8 @@ exports.DeletePhoto = DeletePhoto;
 exports.MentorApproval = MentorApproval;
 exports.MentorRequestList = MentorRequestList;
 exports.PersonalityTypes = PersonalityTypes;
+exports.studentIDList = studentIDList;
+exports.MentorGet = MentorGet;
 
 exports.UpdateProfile = UpdateProfile;
 
