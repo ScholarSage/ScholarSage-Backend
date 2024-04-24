@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const personalityTypeSchema = new mongoose.Schema({
   value: { type: String, required: true, unique: true, primary: true }, // Primary field
@@ -7,7 +7,7 @@ const personalityTypeSchema = new mongoose.Schema({
   introduction: { type: String, required: true },
   strengths: { type: Array, required: true },
   weaknesses: { type: Array, required: true },
-  imgUrl: { type: String, required: true }, 
+  imgUrl: { type: String, required: true },
   careerPaths: { type: String, required: true },
   conclusion: { type: String, required: true },
   romanticRelationships: { type: String, required: true },
@@ -16,6 +16,9 @@ const personalityTypeSchema = new mongoose.Schema({
   parenthood: { type: String, required: true },
 });
 
-const PersonalityType = mongoose.model('PersonalityType', personalityTypeSchema);
+const PersonalityType = mongoose.model(
+  "PersonalityType",
+  personalityTypeSchema
+);
 
 module.exports = PersonalityType;
