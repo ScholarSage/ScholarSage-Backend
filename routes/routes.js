@@ -24,14 +24,16 @@ const {
   ChangeAppointmentStatus,
   MarkAsSeen,
   DeleteAllNotifications,
-  checkBookingAvailability,
-  getAppointments,
-  changeAppointmentStatus,
-  markAllNotificationsAsSeen,
-  deleteAllNotifications,
+
   studentIDList,
   MentorGet,
 } = require("../controllers/userController");
+
+// const {
+//   submitQuestions,
+//   getQuestions,
+//   calculateQuizScores,
+// } = require("../controllers/quizController");
 
 router.post("/StudentRegister", StudentRegister);
 router.post("/MentorRegister", MentorRegister);
@@ -47,13 +49,13 @@ router.put("/Approve-Mentor/:id/:status", MentorApproval);
 router.get("/mentor-request-list", MentorRequestList);
 router.get("/personality-types/:value", PersonalityTypes);
 router.post("/studentList", studentIDList);
-router.post("/MentorGet",MentorGet);
+router.post("/MentorGet", MentorGet);
 
 router.post("/delete-photo", DeletePhoto);
 router.post("/change-password", ChangePassword);
 router.post("/book-appointment", BookAppointment);
 router.post("/check-booking-availability", CheckBookingAvailability);
-router.get("/get-appointments-student", GetAppointmentsStudent);
+router.post("/get-appointments-student", GetAppointmentsStudent);
 router.post("/get-appointments-mentor", GetAppointmentsMentor);
 
 router.post("/change-appointment-status", ChangeAppointmentStatus);

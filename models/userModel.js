@@ -29,9 +29,18 @@ const UserDetailsSchema = new mongoose.Schema({
   },
   address: { type: String },
   contactNumber: { type: String },
-  city: { type: String },
-  state: { type: String },
-  profilePhoto: { type: String }, // Assuming you store the file path or URL
+  degreeProgram: { type: String },
+  academicLevel: { type: String },
+  year: { type: String },
+  department: { type: String },
+  faculty: { type: String },
+  image: { type: String }, // Assuming you store the file path or URL
+  personalitytype: { type: String, default: "INTJ" }, // Set INTJ as default value
+  designation: { type: String },
+  linkedin: { type: String },
+  mobile: { type: String },
+  availablefrom: { type: String },
+  availableto: { type: String },
   seenNotifications: {
     type: Array,
     default: [],
