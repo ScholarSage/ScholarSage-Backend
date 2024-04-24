@@ -27,11 +27,7 @@ const UserDetailsSchema = new mongoose.Schema({
       return this.usertype === "Mentor";
     },
   },
-  address: { type: String },
-  contactNumber: { type: String },
-  city: { type: String },
-  state: { type: String },
-  profilePhoto: { type: String }, // Assuming you store the file path or URL
+  
   seenNotifications: {
     type: Array,
     default: [],
@@ -40,7 +36,17 @@ const UserDetailsSchema = new mongoose.Schema({
     type: Array,
     default: [],
   },
-});
+
+  address: { type: String, default: null },
+  contactNumber: { type: String, default: null },
+  profilePhoto: { type: String, default: null },
+  degreeProgram: { type: String, default: null },
+  academicLevel: { type: String, default: null },
+  department: { type: String, default: null },
+  faculty: { type: String, default: null },
+}, { strict: false }
+
+); 
 
 const User = mongoose.model("UserInfo", UserDetailsSchema);
 

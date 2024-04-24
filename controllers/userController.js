@@ -1,6 +1,7 @@
 const User = require("../models/userModel");
 const StudentMentor = require("../models/StudentMentorModel");
 const PersonalityType = require("../models/personalityType");
+const Resource = require('../models/ResourceModel');
 const Appointments = require("../models/appointmentModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -502,31 +503,28 @@ const SaveChanges = async (req, res) => {
     fname,
     lname,
     email,
+    scnumber,
     address,
-    contactNumber,
-    city,
-    state,
+    contactNo,
+    degreeProgram,
+    academicLevel,
+    department,
+    faculty,
     currentPassword,
     newPassword,
     confirmPassword,
     cancelChanges, // New parameter to check if the cancel button is clicked
   } = req.body;
 
-  // Handle file upload (assuming you have a field named 'photo' in your form)
-  const photoUrl = req.file ? req.file.path : null;
-
   try {
-    // Get the current user
     const user = await User.findOne({ _id: id });
 
     if (!user) {
       return res.json({ status: "error", message: "User not found" });
     }
 
-    // Store the current photo URL in a temporary field
     const tempPhotoUrl = user.photoUrl;
 
-    // Update user profile and photo in the database
     await User.updateOne(
       { _id: id },
       {
@@ -534,11 +532,17 @@ const SaveChanges = async (req, res) => {
           fname: fname,
           lname: lname,
           email: email,
+          scnumber: scnumber,
           address: address,
-          contactNumber: contactNumber,
-          city: city,
-          state: state,
-          photoUrl: cancelChanges ? tempPhotoUrl : photoUrl, // Use tempPhotoUrl if cancelChanges is true
+          contactNo: contactNo,
+          degreeProgram: degreeProgram,
+          academicLevel: academicLevel,
+          department: department,
+          faculty: faculty,
+          currentPassword: currentPassword,
+          newPassword: newPassword,
+          confirmPassword: confirmPassword,
+          photoUrl: cancelChanges ? tempPhotoUrl : req.file ? req.file.path : tempPhotoUrl,
         },
       }
     );
@@ -578,25 +582,6 @@ const SaveChanges = async (req, res) => {
   }
 };
 
-const DeletePhoto = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    await User.updateOne(
-      { _id: id },
-      {
-        $unset: {
-          photoUrl: "",
-        },
-      }
-    );
-    res.json({ status: "ok", message: "Photo deleted successfully." });
-  } catch (error) {
-    console.error(error);
-    res.json({ status: "error", message: "Error deleting photo" });
-  }
-};
-
 const PersonalityTypes = async (req, res) => {
   const { value } = req.params;
   try {
@@ -608,30 +593,6 @@ const PersonalityTypes = async (req, res) => {
     }
   } catch (error) {
     res.status(500).send("Internal Server Error");
-  }
-};
-const UpdateProfile = async (req, res) => {
-  const { id } = req.params;
-  const { fname, lname, email, address, contactNumber, city, state } = req.body;
-
-  try {
-    User.updateOne(
-      { _id: id },
-      {
-        $set: {
-          fname: fname,
-          lname: lname,
-          email: email,
-          address: address,
-          contactNumber: contactNumber,
-          city: city,
-          state: state,
-        },
-      }
-    );
-    res.json({ status: "ok", message: "Profile updated successfully" });
-  } catch (error) {
-    res.json({ status: "error", message: "Error updating profile" });
   }
 };
 
@@ -877,7 +838,7 @@ const deleteAllNotifications = async (req, res) => {
       success: false,
       error,
     });
-  }
+  }object
 };
 exports.StudentRegister = StudentRegister;
 exports.MentorRegister = MentorRegister;
@@ -888,12 +849,9 @@ exports.ResetPasswordBeforeSubmit = ResetPasswordBeforeSubmit;
 exports.ResetPasswordAfterSubmit = ResetPasswordAfterSubmit;
 exports.SaveChanges = SaveChanges;
 exports.UploadPhoto = UploadPhoto;
-exports.DeletePhoto = DeletePhoto;
 exports.MentorApproval = MentorApproval;
 exports.MentorRequestList = MentorRequestList;
 exports.PersonalityTypes = PersonalityTypes;
-
-exports.UpdateProfile = UpdateProfile;
 
 exports.ChangePassword = ChangePassword;
 exports.BookAppointment = BookAppointment;
