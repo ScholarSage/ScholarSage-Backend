@@ -1,6 +1,7 @@
 const User = require("../models/userModel");
 const StudentMentor = require("../models/StudentMentorModel");
 const PersonalityType = require("../models/personalityType");
+const Resource = require('../models/ResourceModel');
 const Appointments = require("../models/appointmentModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -427,7 +428,7 @@ const MentorApproval = async (req, res) => {
   }
 };
 
-const MentorRequestList = async (req,res) => {
+const MentorRequestList = async (req, res) => {
   try {
     const mentors = await User.find({ usertype: "Mentor", isApproved: false });
     res.status(200).json({ status: "ok", data: mentors });
@@ -566,9 +567,6 @@ const SaveChanges = async (req, res) => {
       image,
   } = req.body;
 
-  // Handle file upload (assuming you have a field named 'photo' in your form)
-  const photoUrl = req.file ? req.file.path : null;
-
   try {
     // Get the current user
     const user = await User.findOne({ _id: objectId });
@@ -580,7 +578,6 @@ const SaveChanges = async (req, res) => {
     // Store the current photo URL in a temporary field
     // const tempPhotoUrl = user.photoUrl;
 
-    // Update user profile and photo in the database
     await User.updateOne(
       { _id: objectId },
       {
@@ -644,25 +641,6 @@ const SaveChanges = async (req, res) => {
   }
 };
 
-const DeletePhoto = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    await User.updateOne(
-      { _id: id },
-      {
-        $unset: {
-          photoUrl: "",
-        },
-      }
-    );
-    res.json({ status: "ok", message: "Photo deleted successfully." });
-  } catch (error) {
-    console.error(error);
-    res.json({ status: "error", message: "Error deleting photo" });
-  }
-};
-
 const PersonalityTypes = async (req, res) => {
   const { value } = req.params;
   try {
@@ -674,29 +652,6 @@ const PersonalityTypes = async (req, res) => {
     }
   } catch (error) {
     res.status(500).send("Internal Server Error");
-  }
-};
-const UpdateProfile = async (req, res) => {
-  const { id } = req.params;
-  const { fname, lname, email, address, contactNumber, city, state } = req.body;
-  try {
-    User.updateOne(
-      { _id: id },
-      {
-        $set: {
-          fname: fname,
-          lname: lname,
-          email: email,
-          address: address,
-          contactNumber: contactNumber,
-          city: city,
-          state: state,
-        },
-      }
-    );
-    res.json({ status: "ok", message: "Profile updated successfully" });
-  } catch (error) {
-    res.json({ status: "error", message: "Error updating profile" });
   }
 };
 
@@ -761,22 +716,18 @@ const ChangePassword = async (req, res) => {
 const BookAppointment = async (req, res) => {
   try {
     req.body.status = "pending";
-    req.body.date = moment(req.body.date, "DD-MM-YYYY").toISOString();
-    req.body.time = moment(req.body.time, "HH:mm").toISOString();
 
     const newAppoinment = new Appointments(req.body);
     await newAppoinment.save();
 
-    // const studen t = await student.findOne({ scnumber: req.body.scnumber });
+    // const student = await student.findOne({ scnumber: req.body.scnumber });
     const user = await User.findOne({ mentorid: req.body.mentorid });
 
     //pushing notifications to student based on his scnumber
 
     user.unseenNotifications.push({
       type: "new-appointment-request",
-      // message: `a new appoinment request has been made by ${req.body.userInfo.scnumber}`,
-      message: `a new appoinment request has been made by `,
-
+      message: `a new appoinment request has been made by ${req.body.scnumber}`,
       onClickPath: "/mentor/appointments",
     });
     await user.save();
@@ -796,7 +747,7 @@ const BookAppointment = async (req, res) => {
 
 const CheckBookingAvailability = async (req, res) => {
   try {
-    const date = moment(req.body.date, "DD-MM-YYYY").toISOString();
+    const date = req.body.date;
     const fromTime = moment(req.body.time, "HH:mm")
       .subtract(1, "hours")
       .toISOString();
@@ -822,26 +773,20 @@ const CheckBookingAvailability = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    res.Status(500).send({
+    res.status(500).send({
       message: "Error booking a appointment",
       success: false,
       error,
     });
   }
 };
-
 const GetAppointmentsStudent = async (req, res) => {
   try {
-    const student = await User.findOne({ scnumber: req.body.scnumber });
-
-    const appointments = await Appointments.findOne({
-      _id: req.body.scnumber,
-    });
-
-    res.status(200).send({
-      message: "Appointment fetched successfully ",
-      success: true,
-      data: appointments,
+    const { scnumber } = req.body;
+    const appointments = await Appointments.find({ scnumber: scnumber });
+    res.status(200).json({
+      status: "ok",
+      appointments,
     });
   } catch (error) {
     console.log(error);
@@ -874,19 +819,24 @@ const GetAppointmentsMentor = async (req, res) => {
 const ChangeAppointmentStatus = async (req, res) => {
   try {
     const { appointmentId, status } = req.body;
-    const appointment = await Appointments.findOnebyIdAndUpdate(appointmentId, {
-      status,
-    });
+    // const appointment = await Appointments.findOneAndUpdate(appointmentId, {
+    //   status,
+    // });
+    const appointment = await Appointments.findOneAndUpdate(
+      { _id: appointmentId },
+      { status },
+      { new: true }
+    );
 
     const student = await User.findOne({ scnumber: appointment.scnumber });
     const unseenNotifications = student.unseenNotification;
 
-    unseenNotifications.push({
+    student.unseenNotifications.push({
       type: "Appointment-status-changed",
-      messsage: `Your appointment status has been changed ${status}`,
+      message: `Your appointment status has been changed ${status}`,
       onClickPath: "/appointments",
     });
-    await student.saveInfo();
+    await student.save();
 
     res.status(200).send({
       message: "Appointment status changed successfully",
@@ -903,7 +853,7 @@ const ChangeAppointmentStatus = async (req, res) => {
 };
 
 const MarkAsSeen = async (req, res) => {
-  const {id} = req.body;
+  const { id } = req.body;
   const objectId = new mongoose.Types.ObjectId(id);
   try {
     const user = await User.findOne({ _id: objectId });
@@ -918,16 +868,17 @@ const MarkAsSeen = async (req, res) => {
       { _id: objectId },
       {
         $set: {
-          "seenNotifications": [...user.seenNotifications, ...user.unseenNotifications],
-          "unseenNotifications": [],
+          seenNotifications: [
+            ...user.seenNotifications,
+            ...user.unseenNotifications,
+          ],
+          unseenNotifications: [],
         },
       }
     );
 
     // const unseenNotifications = user.unseenNotifications || [];
     // const seenNotifications = user.seenNotifications || [];
-
-
 
     //  seenNotifications.push(...unseenNotifications);
     //   user.unseenNotifications = [];
@@ -961,7 +912,7 @@ const MarkAsSeen = async (req, res) => {
 };
 
 const DeleteAllNotifications = async (req, res) => {
-  const {id} = req.body;
+  const { id } = req.body;
   const objectId = new mongoose.Types.ObjectId(id);
   try {
     const user = await User.findOne({ _id: objectId });
@@ -976,7 +927,7 @@ const DeleteAllNotifications = async (req, res) => {
       { _id: objectId },
       {
         $set: {
-          "seenNotifications": [],
+          seenNotifications: [],
         },
       }
     );
@@ -995,14 +946,14 @@ const DeleteAllNotifications = async (req, res) => {
       success: false,
       error,
     });
-  }
+  }object
 };
 
 const studentIDList = async (req, res) => {
   const { mentorID } = req.body;
 
   try {
-    // Find the list of student IDs associated with the mentor ID  
+    // Find the list of student IDs associated with the mentor ID
     console.log(mentorID);
     const studentIDs = await StudentMentor.find({ mentorID });
 
@@ -1020,7 +971,7 @@ const studentIDList = async (req, res) => {
   } catch (error) {
     // Handle any errors
     console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -1039,14 +990,19 @@ const MentorGet = async (req, res) => {
     // Find the mentor document associated with the given mentor ID
     const mentor = await User.findOne({ _id: mentorID, usertype: "Mentor" });
     if (!mentor) {
-      return res.status(200).json({status:"Mentor Not Found" });
+      return res.status(200).json({ status: "Mentor Not Found" });
     }
 
     // Remove sensitive fields from the mentor document
-    const { password, seenNotifications, unseenNotifications, ...mentorWithoutSensitiveFields } = mentor.toObject();
+    const {
+      password,
+      seenNotifications,
+      unseenNotifications,
+      ...mentorWithoutSensitiveFields
+    } = mentor.toObject();
 
     // Send the mentor document as a response
-    res.status(200).json({status:"ok",data:mentorWithoutSensitiveFields});
+    res.status(200).json({ status: "ok", data: mentorWithoutSensitiveFields });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -1178,8 +1134,6 @@ const SaveGpa = async(req,res)=>{
   }
 }
 
-
-
 exports.StudentRegister = StudentRegister;
 exports.MentorRegister = MentorRegister;
 exports.LoginUser = LoginUser;
@@ -1189,15 +1143,12 @@ exports.ResetPasswordBeforeSubmit = ResetPasswordBeforeSubmit;
 exports.ResetPasswordAfterSubmit = ResetPasswordAfterSubmit;
 exports.SaveChanges = SaveChanges;
 exports.UploadPhoto = UploadPhoto;
-exports.DeletePhoto = DeletePhoto;
 exports.MentorApproval = MentorApproval;
 exports.MentorRequestList = MentorRequestList;
 exports.PersonalityTypes = PersonalityTypes;
 exports.studentIDList = studentIDList;
 exports.MentorGet = MentorGet;
 exports.MentorGetForAdmin = MentorGetForAdmin;
-
-exports.UpdateProfile = UpdateProfile;
 
 exports.ChangePassword = ChangePassword;
 exports.BookAppointment = BookAppointment;
