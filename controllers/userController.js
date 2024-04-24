@@ -102,7 +102,7 @@ const StudentRegister = async (req, res) => {
 };
 
 const MentorRegister = async (req, res) => {
-  const { fname, lname, email, mentorid, password, confirmpassword, usertype } =
+  const { fname, lname, email, mentorid, password, confirmpassword, usertype,image,designation,department,linkedin,mobile,availablefrom,availableto } =
     req.body;
 
   try {
@@ -154,6 +154,13 @@ const MentorRegister = async (req, res) => {
       mentorid,
       password: encryptedPassword,
       usertype,
+      image,
+      designation,
+      department,
+      linkedin,
+      mobile,
+      availablefrom,
+      availableto,
     });
     res.status(200).send({ status: "ok" });
   } catch (error) {
@@ -301,7 +308,7 @@ const ResetPasswordAfterSubmit = async (req, res) => {
   const { password, confirmpassword } = req.body;
   if (password !== confirmpassword) {
     console.log("password not matched with confirm password");
-    return res.json({ status: "password not matched with confirm password" });  object
+    return res.json({ status: "password not matched with confirm password" });  
   }
   const oldUser = await User.findOne({ _id: id });
   if (!oldUser) {
@@ -344,7 +351,7 @@ const MentorApproval = async (req, res) => {
       await mentor.save();
       res
         .status(200)
-        .send({ status: "ok", message: "Mentor approved successfully" });
+        .send({ status: "ok", message: `Mentor Approved Successfully named ${mentor.fname} ${mentor.lname}` });
       const mentorApprovalMessage = `Hi ${mentor.fname}. Your mentor account of ScholarSage under ${mentor.email} has been approved successfully and now you can log in to your account`;
       var transporter = nodemailer.createTransport({
         service: "gmail",
@@ -380,6 +387,39 @@ const MentorApproval = async (req, res) => {
           console.error(error);
           // res.status(500).send({ status: 'error', message: 'Error assigning mentor to student' });
         });
+    }else if(status === "reject"){
+      await User.deleteOne({
+        _id: objectId,
+      });
+      res
+      .status(200)
+      .send({ status: "ok", message: `Mentor Rejected named ${mentor.fname} ${mentor.lname}` });
+    const mentorApprovalMessage = `Hi ${mentor.fname}. Your mentor account of ScholarSage under ${mentor.email} has been rejected.`;
+    var transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: nodemailerUser,
+        pass: nodemailerUserPassword,
+      },
+    });
+
+    var mailOptions = {
+      from: nodemailerUser,
+      // to: mentor.email,
+      to: nodemailerReceiver,
+      subject: "ScholarSage Mentor Account Rejected",
+      text: mentorApprovalMessage,
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        //console.log('Email sent: ' + info.response);
+        res.send({ status: "Email has been sent" });
+      }
+    });
+
     }
   } catch (error) {
     res.status(500).send({ status: "error", message: "Somthing went wrong" });
@@ -498,20 +538,32 @@ const StudentMentorAssign = async () => {
 
 const SaveChanges = async (req, res) => {
   const { id } = req.params;
+  const objectId = new mongoose.Types.ObjectId(id);
   const {
-    fname,
-    lname,
-    email,
-    address,
-    contactNumber,
-    city,
-    state,
-    currentPassword,
-    newPassword,
-    confirmPassword,
-    cancelChanges,
+    // fname,
+    // lname,
+    // email,
+    // address,
+    // contactNumber,
+    // city,
+    // state,
+    // currentPassword,
+    // newPassword,
+    // confirmPassword,
+    // cancelChanges,
     //seenNotifications,
     //unseenNotifications,
+      address,
+      contactNo,
+      degreeProgram,
+      academicLevel,
+      year,
+      department,
+      faculty,
+      currentPassword,
+      newPassword,
+      confirmNewPassword,
+      image,
   } = req.body;
 
   // Handle file upload (assuming you have a field named 'photo' in your form)
@@ -519,36 +571,45 @@ const SaveChanges = async (req, res) => {
 
   try {
     // Get the current user
-    const user = await User.findOne({ _id: id });
+    const user = await User.findOne({ _id: objectId });
 
     if (!user) {
       return res.json({ status: "error", message: "User not found" });
     }
 
     // Store the current photo URL in a temporary field
-    const tempPhotoUrl = user.photoUrl;
+    // const tempPhotoUrl = user.photoUrl;
 
     // Update user profile and photo in the database
     await User.updateOne(
-      { _id: id },
+      { _id: objectId },
       {
         $set: {
-          fname: fname,
-          lname: lname,
-          email: email,
-          address: address,
-          contactNumber: contactNumber,
-          city: city,
-          state: state,
-          photoUrl: cancelChanges ? tempPhotoUrl : photoUrl, // Use tempPhotoUrl if cancelChanges is true
+          // fname: fname,
+          // lname: lname,
+          // email: email,
+          // address: address,
+          // contactNumber: contactNumber,
+          // city: city,
+          // state: state,
+          // photoUrl: cancelChanges ? tempPhotoUrl : photoUrl, // Use tempPhotoUrl if cancelChanges is true
           //unseenNotifications:unseenNotifications,
           //seenNotifications:seenNotifications
+          address,
+          contactNumber:contactNo,
+          degreeProgram,
+          academicLevel,
+          year,
+          department,
+          faculty,
+          image,
         },
       }
     );
-
+    
     // Change password if provided
-    if (currentPassword && newPassword && confirmPassword) {
+    if (currentPassword && newPassword && confirmNewPassword) {
+      
       if (!(await bcrypt.compare(currentPassword, user.password))) {
         return res.json({
           status: "error",
@@ -556,17 +617,18 @@ const SaveChanges = async (req, res) => {
         });
       }
 
-      if (newPassword !== confirmPassword) {
-        return res.json({
+      if (newPassword !== confirmNewPassword) {
+        console.log("Confirm Password DO Not Match"); //for security
+        return res.status(200).json({
           status: "error",
-          message: "New password and confirm password do not match",
+          message: "Confirm Password DO Not Match",
         });
       }
 
       const encryptedPassword = await bcrypt.hash(newPassword, 10);
 
       await User.updateOne(
-        { _id: id },
+        { _id: objectId },
         {
           $set: {
             password: encryptedPassword,
@@ -617,7 +679,6 @@ const PersonalityTypes = async (req, res) => {
 const UpdateProfile = async (req, res) => {
   const { id } = req.params;
   const { fname, lname, email, address, contactNumber, city, state } = req.body;
-
   try {
     User.updateOne(
       { _id: id },
@@ -992,6 +1053,133 @@ const MentorGet = async (req, res) => {
   }
 };
 
+const MentorGetForAdmin = async (req, res) => {
+  const mentorID = req.body;
+  console.log(mentorID);
+  try {
+    const mentor = await User.findOne({ mentorid: mentorID, usertype: "Mentor" });
+    if (!mentor) {
+      return res.status(200).json({status:"Mentor Not Found" });
+    }
+
+    // Remove sensitive fields from the mentor document
+    const { password, seenNotifications, unseenNotifications, ...mentorWithoutSensitiveFields } = mentor.toObject();
+
+    // Send the mentor document as a response
+    res.status(200).json({status:"ok",data:mentorWithoutSensitiveFields});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const SaveChangesForMentor = async (req, res) => {
+  const { id } = req.params;
+  const objectId = new mongoose.Types.ObjectId(id);
+  const {
+      fname,
+      lname,
+      mobile,
+      designation,
+      department,
+      linkedin,
+      currentPassword,
+      newPassword,
+      confirmNewPassword,
+      image,
+      availablefrom,
+      availableto,
+  } = req.body;
+
+  // Handle file upload (assuming you have a field named 'photo' in your form)
+  const photoUrl = req.file ? req.file.path : null;
+
+  try {
+    // Get the current user
+    const user = await User.findOne({ _id: objectId });
+
+    if (!user) {
+      return res.json({ status: "error", message: "User not found" });
+    }
+
+    // Store the current photo URL in a temporary field
+    // const tempPhotoUrl = user.photoUrl;
+
+    // Update user profile and photo in the database
+    await User.updateOne(
+      { _id: objectId },
+      {
+        $set: {
+          fname,
+          lname,
+          mobile,
+          designation,
+          department,
+          linkedin,
+          image,
+          availablefrom,
+          availableto,
+        },
+      }
+    );
+    
+    // Change password if provided
+    if (currentPassword && newPassword && confirmNewPassword) {
+      
+      if (!(await bcrypt.compare(currentPassword, user.password))) {
+        return res.json({
+          status: "error",
+          message: "Invalid current password",
+        });
+      }
+
+      if (newPassword !== confirmNewPassword) {
+        console.log("Confirm Password DO Not Match"); //for security
+        return res.status(200).json({
+          status: "error",
+          message: "Confirm Password DO Not Match",
+        });
+      }
+
+      const encryptedPassword = await bcrypt.hash(newPassword, 10);
+
+      await User.updateOne(
+        { _id: objectId },
+        {
+          $set: {
+            password: encryptedPassword,
+          },
+        }
+      );
+    }
+
+    res.json({ status: "ok", message: "Profile updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.json({ status: "error", message: "Error updating profile" });
+  }
+};
+
+const SaveGpa = async(req,res)=>{
+  const {id} = req.params;
+  const {gpa} = req.body;
+  const objectId = new mongoose.Types.ObjectId(id);
+  try {
+    await User.updateOne(
+      { _id: objectId },
+      {
+        $set: {
+          gpa,
+        },
+      }
+    );
+  } catch (error) {
+    
+  }
+}
+
+
+
 exports.StudentRegister = StudentRegister;
 exports.MentorRegister = MentorRegister;
 exports.LoginUser = LoginUser;
@@ -1007,6 +1195,7 @@ exports.MentorRequestList = MentorRequestList;
 exports.PersonalityTypes = PersonalityTypes;
 exports.studentIDList = studentIDList;
 exports.MentorGet = MentorGet;
+exports.MentorGetForAdmin = MentorGetForAdmin;
 
 exports.UpdateProfile = UpdateProfile;
 
@@ -1019,3 +1208,8 @@ exports.ChangeAppointmentStatus = ChangeAppointmentStatus;
 exports.CheckBookingAvailability = CheckBookingAvailability;
 exports.MarkAsSeen = MarkAsSeen;
 exports.DeleteAllNotifications = DeleteAllNotifications;
+
+
+
+exports.SaveChangesForMentor = SaveChangesForMentor;
+exports.SaveGpa = SaveGpa;
