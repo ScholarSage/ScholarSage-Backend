@@ -270,7 +270,7 @@ const ForgetPassword = async (req, res) => {
 
     var mailOptions = {
       from: nodemailerUser,
-      to: nodemailerReceiver,
+      to: email,
       subject: "Password Reset",
       text: link,
     };
@@ -364,8 +364,7 @@ const MentorApproval = async (req, res) => {
 
       var mailOptions = {
         from: nodemailerUser,
-        // to: mentor.email,
-        to: nodemailerReceiver,
+        to: mentor.email,
         subject: "ScholarSage Mentor Account Approval",
         text: mentorApprovalMessage,
       };
@@ -406,8 +405,7 @@ const MentorApproval = async (req, res) => {
 
     var mailOptions = {
       from: nodemailerUser,
-      // to: mentor.email,
-      to: nodemailerReceiver,
+      to: mentor.email,
       subject: "ScholarSage Mentor Account Rejected",
       text: mentorApprovalMessage,
     };
@@ -946,7 +944,7 @@ const DeleteAllNotifications = async (req, res) => {
       success: false,
       error,
     });
-  }object
+  }
 };
 
 const studentIDList = async (req, res) => {
@@ -1010,10 +1008,9 @@ const MentorGet = async (req, res) => {
 };
 
 const MentorGetForAdmin = async (req, res) => {
-  const mentorID = req.body;
-  console.log(mentorID);
+  const mentorid = req.body.mentorid;
   try {
-    const mentor = await User.findOne({ mentorid: mentorID, usertype: "Mentor" });
+    const mentor = await User.findOne({ mentorid: mentorid, usertype: "Mentor" });
     if (!mentor) {
       return res.status(200).json({status:"Mentor Not Found" });
     }
@@ -1134,6 +1131,30 @@ const SaveGpa = async(req,res)=>{
   }
 }
 
+
+
+const OneStudentGetForMentor = async (req, res) => {
+  const scnumber = req.body.scnumber;
+  console.log(scnumber);
+  try {
+    const student = await User.findOne({ scnumber: scnumber });
+    if (!student) {
+      return res.status(200).json({status:"Student Not Found" });
+    }
+
+    // Remove sensitive fields from the mentor document
+    const { password, seenNotifications, unseenNotifications, ...studentWithoutSensitiveFields } = student.toObject();
+
+    // Send the mentor document as a response
+    res.status(200).json({status:"ok",data:studentWithoutSensitiveFields});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
 exports.StudentRegister = StudentRegister;
 exports.MentorRegister = MentorRegister;
 exports.LoginUser = LoginUser;
@@ -1164,3 +1185,5 @@ exports.DeleteAllNotifications = DeleteAllNotifications;
 
 exports.SaveChangesForMentor = SaveChangesForMentor;
 exports.SaveGpa = SaveGpa;
+
+exports.OneStudentGetForMentor = OneStudentGetForMentor;
