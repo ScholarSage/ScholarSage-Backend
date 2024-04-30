@@ -29,14 +29,18 @@ const {
   MentorGetForAdmin,
   SaveChangesForMentor,
   SaveGpa,
+
+  OneStudentGetForMentor,
 } = require("../controllers/userController");
 
+
+
 const {
-  getGPA,
-  addGPA,
-  updateGPA,
-  deleteGPA,
-} = require("../controllers/GPAController");
+    getGPA,
+    addGPA,
+    updateGPA,
+    deleteGPA,
+  } = require("../controllers/GPAController");
 
 const {
   getResources,
@@ -91,6 +95,8 @@ router.post("/update-GPA/:id",updateGPA);
 router.delete("/delete-GPA/:id",deleteGPA);
 
 router.post("/SaveGpa/:id",SaveGpa);
+
+router.post("/OneStudentGetForMentor",OneStudentGetForMentor);
 
 
 module.exports = router;
